@@ -1,6 +1,9 @@
 # server-feed
 
 # Service File
+## To edit file
+sudo nano /etc/systemd/system/serverfeed.service
+## File
 ```
 [Unit]
 Description=Server event logger for PavlovVR Dedicated server
