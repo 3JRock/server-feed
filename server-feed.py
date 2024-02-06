@@ -1,6 +1,10 @@
 #run with: python3 server-feed.py
 import subprocess
 import json
+
+import requests
+
+
 def convert(arr):
     built = ""
     for item in arr:
@@ -14,7 +18,7 @@ class Process:
     closed_count = 0
 
     def process_line(self, line):
-        if "StatManagerLog" in line:
+        if "StatManagerLog" in line and "Dumping Stats" not in line:
             self.open_count = 1
             self.buffer.append("{")
         elif "{" in line:
@@ -26,7 +30,19 @@ class Process:
             if self.open_count == self.closed_count:
                 self.open_count = 0
                 self.closed_count = 0
-                print(json.loads(convert(self.buffer))) #post request here
+                data = convert(self.buffer)
+                if "KillData" in data:
+                    requests.post("https://shackmm.com/NAE-ONE/kill", data=json.dumps(data),
+                                  headers={"Content-Type": "application/json", "key": "pvE4VgbvLZXbwoew8mYi"})
+                elif "RoundEnd" in data:
+                    requests.post("https://shackmm.com/NAE-ONE/end", data=json.dumps(data),
+                                  headers={"Content-Type": "application/json", "key": "pvE4VgbvLZXbwoew8mYi"})
+                elif "RoundState" in data:
+                    requests.post("https://shackmm.com/NAE-ONE/state", data=json.dumps(data),
+                                  headers={"Content-Type": "application/json", "key": "pvE4VgbvLZXbwoew8mYi"})
+                elif "BombData" in data:
+                    requests.post("https://shackmm.com/NAE-ONE/bomb", data=json.dumps(data),
+                                  headers={"Content-Type": "application/json", "key": "pvE4VgbvLZXbwoew8mYi"})
                 self.buffer.clear()
         else:
             if self.open_count > 0:
