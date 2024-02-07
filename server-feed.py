@@ -1,8 +1,10 @@
-#run with: python3 server-feed.py
+# run with: python3 server-feed.py
 import subprocess
 import json
 
 import requests
+
+PROD = True
 
 
 def convert(arr):
@@ -12,25 +14,34 @@ def convert(arr):
     return built
 
 
-class Process:
-    buffer = []
-    open_count = 0
-    closed_count = 0
+buffer = []
+open_count = 0
+closed_count = 0
+logging = False
 
-    def process_line(self, line):
-        if "StatManagerLog" in line and "Dumping Stats" not in line:
-            self.open_count = 1
-            self.buffer.append("{")
-        elif "{" in line:
-            self.open_count += 1
-            self.buffer.append("{")
-        elif "}" in line:
-            self.closed_count += 1
-            self.buffer.append("}")
-            if self.open_count == self.closed_count:
-                self.open_count = 0
-                self.closed_count = 0
-                data = convert(self.buffer)
+
+def process_line(line):
+    global open_count, closed_count, buffer, logging
+    if "StatManagerLog" in line and "Dumping Stats" not in line:
+        logging = True
+        open_count = 1
+        buffer.append("{")
+    elif "{" in line and logging:
+        open_count += 1
+        buffer.append("{")
+    elif "}" in line and logging:
+        closed_count += 1
+        buffer.append("}")
+        if open_count == closed_count:
+            open_count = 0
+            closed_count = 0
+            logging = False
+            try:
+                data = json.loads(convert(buffer))
+            except json.decoder.JSONDecodeError:
+                data = json.loads(convert(buffer[1:]))
+            print(data)
+            if PROD:
                 if "KillData" in data:
                     requests.post("https://shackmm.com/NAE-ONE/kill", data=json.dumps(data),
                                   headers={"Content-Type": "application/json", "key": "pvE4VgbvLZXbwoew8mYi"})
@@ -43,11 +54,11 @@ class Process:
                 elif "BombData" in data:
                     requests.post("https://shackmm.com/NAE-ONE/bomb", data=json.dumps(data),
                                   headers={"Content-Type": "application/json", "key": "pvE4VgbvLZXbwoew8mYi"})
-                self.buffer.clear()
-        else:
-            if self.open_count > 0:
-                self.buffer.append(line)
-parser = Process()
+            buffer.clear()
+    else:
+        if open_count > 0:
+            buffer.append(line)
+
 
 def tail_file(file_path):
     # Use 'tail -n 0 -f' to start from the end of the file and follow updates
@@ -59,13 +70,15 @@ def tail_file(file_path):
             # Process the output line by line
             for line in process.stdout:
                 # Strip newline character and process the line
-                parser.process_line(line.strip())
+                process_line(line.strip())
     except KeyboardInterrupt:
         print("Script terminated by user.")
+
 
 # Replace 'your_log_file.log' with the actual path to your log file
 log_file_path = 'pavlovserver/Pavlov/Saved/Logs/Pavlov.log'
 try:
     tail_file(log_file_path)
 except Exception as e:
+    print(buffer)
     print(f"Error: {e}")
