@@ -76,7 +76,7 @@ def tail_file(file_path):
 
 
 # Replace 'your_log_file.log' with the actual path to your log file
-log_file_path = 'pavlovserver/Pavlov/Saved/Logs/Pavlov.log'
+log_file_path = '../pavlovserver/Pavlov/Saved/Logs/Pavlov.log'
 try:
     tail_file(log_file_path)
 except Exception as e:
