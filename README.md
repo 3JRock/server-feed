@@ -11,7 +11,7 @@ Description=Server event logger for PavlovVR Dedicated server
 [Service]
 Type=simple
 WorkingDirectory=/home/steam/logger
-ExecStart=/home/steam/steam/logger/start.sh
+ExecStart=/home/steam/logger/start.sh
 
 StandardOutput=append:/var/log/pavlovLogger.log
 StandardError=append:/var/log/pavlovLogger.log
